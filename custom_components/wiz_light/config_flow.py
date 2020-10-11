@@ -15,5 +15,8 @@ async def _async_has_devices(hass) -> bool:
 
 
 config_entry_flow.register_discovery_flow(
-    DOMAIN, "WiZ Light integration", _async_has_devices, config_entries.CONN_CLASS_UNKNOWN
+    DOMAIN,
+    "WiZ Light integration",
+    _async_has_devices,
+    config_entries.CONN_CLASS_UNKNOWN,
 )
