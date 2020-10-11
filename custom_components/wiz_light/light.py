@@ -22,6 +22,8 @@ from homeassistant.const import CONF_HOST, CONF_NAME
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.color as color_utils
 
+from .const import DOMAIN
+
 _LOGGER = logging.getLogger(__name__)
 
 # Validation of the user's configuration
