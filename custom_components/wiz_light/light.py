@@ -1,7 +1,11 @@
 """WiZ Light integration."""
 import logging
+from typing import Optional
 
-from pywizlight import SCENES, PilotBuilder, wizlight
+
+from pywizlight.bulb import wizlight, PilotBuilder
+from pywizlight import SCENES
+
 import voluptuous as vol
 
 # Import the device class from the component
@@ -43,17 +47,19 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # The configuration check takes care they are present.
     ip_address = config[CONF_HOST]
     bulb = wizlight(ip_address)
+    mac = await bulb.getMac()
 
     # Add devices
-    async_add_entities([WizBulb(bulb, config[CONF_NAME])])
-
+    async_add_entities([WizBulb(bulb, config[CONF_NAME], mac)])
 
 class WizBulb(LightEntity):
     """Representation of WiZ Light bulb."""
 
-    def __init__(self, light, name):
+    def __init__(self, light, name, mac):
         """Initialize an WiZLight."""
         self._light = light
+        self._mac = mac
+        self._unique_id = mac + "-light-wizlight"
         self._state = None
         self._brightness = None
         self._name = name
@@ -64,8 +70,6 @@ class WizBulb(LightEntity):
         self._effect = None
         self._scenes = []
         self._bulbtype = None
-        self._unique_id = None
-        self.async_update()
 
     @property
     def brightness(self):
@@ -93,8 +97,8 @@ class WizBulb(LightEntity):
         return self._state
 
     @property
-    def unique_id
-        """Return unique_id of the light """
+    def unique_id(self) -> Optional[str]:
+        _LOGGER.info("Setting unique_id of the WiZ bulb as %s", self._unique_id)
         return self._unique_id
 
     async def async_turn_on(self, **kwargs):
@@ -219,7 +223,6 @@ class WizBulb(LightEntity):
 
         if self._state is not None and self._state is not False:
             await self.get_bulb_type()
-            await self.get_bulb_unique_id()
             self.update_brightness()
             self.update_temperature()
             self.update_color()
@@ -315,14 +318,6 @@ class WizBulb(LightEntity):
             if "moduleName" in bulb_config["result"]:
                 self._bulbtype = bulb_config["result"]["moduleName"]
                 _LOGGER.info("Initiate the WiZ bulb as %s", self._bulbtype)
-
-    async def get_bulb_unique_id(self):
-        """Get the bulb uniq_id based on model and mac."""
-        if self._unique_id is None:
-            bulb_config = await self._light.getBulbConfig()
-            if "moduleName" and "mac" in bulb_config["result"]:
-                self._unique_id = bulb_config["result"]["moduleName"] + "_" + bulb_config["result"]["mac"]
-                _LOGGER.info("Setting unique_id of the WiZ bulb as %s", self._unique_id)
 
     def update_scene_list(self):
         """Update the scene list."""
