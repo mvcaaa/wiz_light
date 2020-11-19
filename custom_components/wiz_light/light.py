@@ -64,6 +64,8 @@ class WizBulb(LightEntity):
         self._effect = None
         self._scenes = []
         self._bulbtype = None
+        self._unique_id = None
+        self.async_update()
 
     @property
     def brightness(self):
@@ -89,6 +91,11 @@ class WizBulb(LightEntity):
     def is_on(self):
         """Return true if light is on."""
         return self._state
+
+    @property
+    def unique_id
+        """Return unique_id of the light """
+        return self._unique_id
 
     async def async_turn_on(self, **kwargs):
         """Instruct the light to turn on."""
@@ -212,6 +219,7 @@ class WizBulb(LightEntity):
 
         if self._state is not None and self._state is not False:
             await self.get_bulb_type()
+            await self.get_bulb_unique_id()
             self.update_brightness()
             self.update_temperature()
             self.update_color()
@@ -307,6 +315,14 @@ class WizBulb(LightEntity):
             if "moduleName" in bulb_config["result"]:
                 self._bulbtype = bulb_config["result"]["moduleName"]
                 _LOGGER.info("Initiate the WiZ bulb as %s", self._bulbtype)
+
+    async def get_bulb_unique_id(self):
+        """Get the bulb uniq_id based on model and mac."""
+        if self._unique_id is None:
+            bulb_config = await self._light.getBulbConfig()
+            if "moduleName" and "mac" in bulb_config["result"]:
+                self._unique_id = bulb_config["result"]["moduleName"] + "_" + bulb_config["result"]["mac"]
+                _LOGGER.info("Setting unique_id of the WiZ bulb as %s", self._unique_id)
 
     def update_scene_list(self):
         """Update the scene list."""
