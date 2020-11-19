@@ -1,7 +1,11 @@
 """WiZ Light integration."""
 import logging
+from typing import Optional
 
-from pywizlight import SCENES, PilotBuilder, wizlight
+
+from pywizlight.bulb import wizlight, PilotBuilder
+from pywizlight import SCENES
+
 import voluptuous as vol
 
 # Import the device class from the component
@@ -43,17 +47,19 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # The configuration check takes care they are present.
     ip_address = config[CONF_HOST]
     bulb = wizlight(ip_address)
+    mac = await bulb.getMac()
 
     # Add devices
-    async_add_entities([WizBulb(bulb, config[CONF_NAME])])
-
+    async_add_entities([WizBulb(bulb, config[CONF_NAME], mac)])
 
 class WizBulb(LightEntity):
     """Representation of WiZ Light bulb."""
 
-    def __init__(self, light, name):
+    def __init__(self, light, name, mac):
         """Initialize an WiZLight."""
         self._light = light
+        self._mac = mac
+        self._unique_id = mac + "-light-wizlight"
         self._state = None
         self._brightness = None
         self._name = name
@@ -89,6 +95,11 @@ class WizBulb(LightEntity):
     def is_on(self):
         """Return true if light is on."""
         return self._state
+
+    @property
+    def unique_id(self) -> Optional[str]:
+        _LOGGER.info("Setting unique_id of the WiZ bulb as %s", self._unique_id)
+        return self._unique_id
 
     async def async_turn_on(self, **kwargs):
         """Instruct the light to turn on."""
